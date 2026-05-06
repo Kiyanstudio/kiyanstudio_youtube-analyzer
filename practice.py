@@ -2,6 +2,10 @@ y= float(input("Emter a number: "))
 for i in range(1,11):
     print(y*i)
 
+numbers = [0, 1, 2, 3, 4, 5, 6, 7,34, 11, 13, 14]
+m= len(numbers) // 2
+print(numbers[m-2 :m+2])
+
 fruits = ["apple", "banana", "cherry", "date", "elderberry", "fig"]
 print(fruits[len(fruits)-3])
 
