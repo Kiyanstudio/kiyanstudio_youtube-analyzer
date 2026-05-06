@@ -1,7 +1,11 @@
-fruits = ["apple", "banana", "cherry", "date", "elderberry"]
-print(fruits[2])
+y= float(input("Emter a number: "))
+for i in range(1,11):
+    print(y*i)
 
-numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+fruits = ["apple", "banana", "cherry", "date", "elderberry", "fig"]
+print(fruits[len(fruits)-3])
+
+numbers = [0, 1, 2, 3, 4, 5, 6, 7,34, 11, 13, 14]
 print(numbers[3:7])
 
 data = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
