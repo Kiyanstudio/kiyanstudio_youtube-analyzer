@@ -1,0 +1,3 @@
+words = ["banana", "fig", "elderberry", "date", "kiwi"]
+words.sort(key=len)
+print(words)

@@ -1,0 +1,4 @@
+tasks = ["plan", "design", "build", "test", "deploy"]
+k= tasks.pop(2)
+print(k)
+print(tasks)

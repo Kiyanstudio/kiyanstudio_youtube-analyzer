@@ -1,0 +1,3 @@
+string_nums = ["10", "20", "30", "40", "50"]
+result = list(map(int, string_nums))
+print(sum(result))

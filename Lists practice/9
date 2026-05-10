@@ -1,0 +1,3 @@
+names = ["Alice", "Charlie", "Diana"]
+names.insert(1, "Bob")
+print(names)

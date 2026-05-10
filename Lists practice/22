@@ -1,0 +1,3 @@
+words = ["  alice  ", "BOB", "charlie", "  DIANA  "]
+result = [word.strip().capitalize() for word in words]
+print(result)
