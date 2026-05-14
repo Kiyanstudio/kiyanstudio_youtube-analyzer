@@ -1,3 +1,10 @@
-string_nums = ["10", "20", "30", "40", "50"]
-result = list(map(int, string_nums))
-print(sum(result))
+def Temperatureweather(a):
+    a = ((a*9)/5) + 30
+    if a > 30:
+        return "It's hot"
+    elif a < 10:
+        return "It's cold"
+    else:
+        return "It's moderate"
+Temperature_weather=int(input("Enter the temperature: "))
+Temperatureweather(Temperature_weather)

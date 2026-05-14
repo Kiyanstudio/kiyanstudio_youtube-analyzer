@@ -1,0 +1,2 @@
+data = [85, 92, 78, 96, 88, 73, 91, 87]
+print(sum(data), round(sum(data)/len(data), 2), min(data), max(data))

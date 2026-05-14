@@ -1,0 +1,3 @@
+grades = [72, 85, 90, 61, 78]
+print(all(g > 60 for g in grades))
+print(any(g > 88 for g in grades))

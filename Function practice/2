@@ -1,0 +1,4 @@
+def describe_pet(animal_type, pet_name):
+    print(f"{pet_name} is a {animal_type}.") 
+describe_pet("cat", "Whiskers")
+describe_pet("dog", "Buddy")

@@ -1,0 +1,8 @@
+num = [4, 7, 1, 9, 3]
+def min_max(lst):
+    minimum = min(lst)
+    maximum = max(lst)
+    return minimum, maximum
+
+min_value, max_value = min_max(num)
+print(f"Minimum: {min_value}, Maximum: {max_value}")
