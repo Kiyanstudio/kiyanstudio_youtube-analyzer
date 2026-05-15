@@ -1,0 +1,4 @@
+def total_cost(*args):
+    return sum(args)
+
+print(total_cost(120, 45, 89, 200))

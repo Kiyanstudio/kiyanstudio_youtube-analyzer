@@ -1,0 +1,6 @@
+login_count = 0
+def record_login():
+    global login_count
+    login_count += 3
+record_login()
+print(login_count)
