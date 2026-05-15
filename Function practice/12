@@ -1,0 +1,7 @@
+def log_event(event_name, *args, **kwargs):
+    print(f"Event: {event_name}")
+    print(f"Tags: {args}")
+    for key, value in kwargs.items():
+        print(f"{key}: {value}")
+
+log_event('login', 'admin', 'web', ip='192.168.1.1', success=True)

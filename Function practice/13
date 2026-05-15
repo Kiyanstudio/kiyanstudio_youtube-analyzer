@@ -1,0 +1,9 @@
+def build_student(name, grade, subject):
+    student = {
+        "name": name,
+        "grade": grade,
+        "subject": subject
+    }
+    return student
+
+student1 = build_student
