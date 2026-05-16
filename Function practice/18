@@ -1,0 +1,10 @@
+employees = [
+    {"name": "Priya", "salary": 60000},
+    {"name": "Arjun", "salary": 45000},
+    {"name": "Meera", "salary": 72000}
+]
+
+sorted_employees = sorted(employees, key=lambda emp: emp["salary"], reverse=True)
+
+for emp in sorted_employees:
+    print(f"{emp['name']}: {emp['salary']}")

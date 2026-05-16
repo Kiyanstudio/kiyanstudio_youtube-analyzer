@@ -1,0 +1,9 @@
+city = "Global City"
+
+def outer():
+    city = "Outer City"
+    def inner():
+        print(city)
+    inner()
+
+outer()

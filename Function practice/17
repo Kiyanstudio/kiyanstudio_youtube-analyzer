@@ -1,0 +1,4 @@
+words = ["python", "go", "javascript", "rust", "java"]
+def filter(words):
+    return [word for word in words if len(word) > 4]
+print(filter(words))

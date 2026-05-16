@@ -1,0 +1,11 @@
+def classify_temp(temp):
+    if temp < 15:
+        return 'Cold'
+    elif 15 <= temp <= 30:
+        return 'Comfortable'
+    else:
+        return 'Hot'
+
+print(classify_temp(10))
+print(classify_temp(22))
+print(classify_temp(37))

@@ -1,6 +1,12 @@
-
 def add_numbers():
-    num1 = float(input("Enter the first number: "))
-    num2 = float(input("Enter the second number: "))
-    result = num1 + num2
-    return result
+    try:
+        num1 = float(input("Enter the first number: "))
+        num2 = float(input("Enter the second number: "))
+        result = num1 + num2
+        print(f"Result: {result}")
+        return result
+    except ValueError:
+        print("Invalid input! Please enter numeric values only.")
+        return None
+
+add_numbers()

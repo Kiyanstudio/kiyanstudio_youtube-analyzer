@@ -1,0 +1,9 @@
+def add_item(item, lst=None):
+    if lst is None:
+        lst = []
+    lst.append(item)
+    return lst
+
+print(add_item('pen'))
+print(add_item('book'))
+print(add_item('ruler'))
