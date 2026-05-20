@@ -1,0 +1,17 @@
+def get_discount(price, pct):
+    return price * pct
+
+def apply_discount(price, pct):
+    return price - get_discount(price, pct)
+
+def format_price(amount):
+    return f"${amount:.2f}"
+
+price = 100
+pct   = 0.15
+
+discount    = get_discount(price, pct)
+final_price = apply_discount(price, pct)
+
+print(f"Discount: {format_price(discount)}")
+print(f"Final price: {format_price(final_price)}")

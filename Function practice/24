@@ -1,0 +1,5 @@
+def create_button(label, *, color='blue', size='medium'):
+    print(f"Button: {label} | {color} | {size}")
+
+create_button('Submit')
+create_button('Cancel', color='red', size='small')

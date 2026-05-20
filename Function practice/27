@@ -1,0 +1,5 @@
+def apply_discount_good(price, discount=0.10):
+    return price - price * discount
+
+print(apply_discount_good(price=500))
+print(apply_discount_good(price=500, discount=0.20))

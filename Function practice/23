@@ -1,0 +1,16 @@
+def celsius_to_fahrenheit(c):
+    return (c * 9/5) + 32
+
+def describe_weather(temp_c):
+    temp_f = celsius_to_fahrenheit(temp_c)
+    if temp_f < 32:
+        descriptor = 'Freezing'
+    elif temp_f < 60:
+        descriptor = 'Cold'
+    else:
+        descriptor = 'Warm'
+    print(f"Temp: {temp_f}°F — {descriptor}")
+
+describe_weather(0)
+describe_weather(10)
+describe_weather(25)

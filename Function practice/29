@@ -1,0 +1,9 @@
+def multiply(*nums):
+    result = 1
+    for n in nums:
+        result *= n
+    return result
+
+values = [2, 3, 4, 5]
+print(multiply(*values))
+

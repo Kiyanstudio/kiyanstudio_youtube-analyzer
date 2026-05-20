@@ -1,7 +1,5 @@
 def print_square(number):
-    result = number**2
-    print(f"The square of {number} is {result}")
+    print(number ** 2)
 
-print_square(5)
-return_squares: Any
-print(return_squares)
+result = print_square(5)
+print(result)

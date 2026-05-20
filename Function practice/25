@@ -1,0 +1,11 @@
+students = [
+    ("Alice", "B", 20),
+    ("Bob", "A", 22),
+    ("Charlie", "B", 19),
+    ("Diana", "A", 21)
+]
+
+sorted_students = sorted(students, key=lambda s: (s[1], s[2]))
+
+for student in sorted_students:
+    print(student)

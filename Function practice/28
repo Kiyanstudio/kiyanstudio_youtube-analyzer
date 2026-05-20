@@ -1,0 +1,10 @@
+def f_to_c(fahrenheit):
+    return (fahrenheit - 32) * 5/9
+ 
+t1 = f_to_c(98.6)
+t2 = f_to_c(72)
+t3 = f_to_c(212)
+
+print(round(t1, 1))
+print(round(t2, 1))
+print(round(t3, 1))
