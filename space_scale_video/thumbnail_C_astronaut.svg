@@ -1,0 +1,57 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgC" cx="30%" cy="40%" r="90%">
+      <stop offset="0%" stop-color="#0c1424"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <linearGradient id="earthrim" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#1f6fd0"/>
+      <stop offset="50%" stop-color="#0a2d5e"/>
+      <stop offset="100%" stop-color="rgba(10,45,94,0)"/>
+    </linearGradient>
+    <radialGradient id="visor" cx="45%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#244b6e"/>
+      <stop offset="70%" stop-color="#0a1520"/>
+      <stop offset="100%" stop-color="#05080d"/>
+    </radialGradient>
+    <filter id="glowC" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bgC)"/>
+  <g fill="#ffffff">
+    <circle cx="120" cy="100" r="1.5"/><circle cx="300" cy="180" r="1.1"/><circle cx="520" cy="90" r="1.3"/>
+    <circle cx="760" cy="140" r="1"/><circle cx="980" cy="80" r="1.4"/><circle cx="1180" cy="160" r="1.2"/>
+    <circle cx="200" cy="300" r="1"/><circle cx="1080" cy="320" r="1.1"/><circle cx="60" cy="220" r="1"/>
+    <circle cx="1220" cy="420" r="1.2"/><circle cx="160" cy="430" r="0.9"/>
+  </g>
+
+  <!-- earth curve bottom -->
+  <ellipse cx="640" cy="980" rx="900" ry="380" fill="url(#earthrim)"/>
+  <ellipse cx="640" cy="980" rx="900" ry="380" fill="none" stroke="#7fd0ff" stroke-width="3" opacity="0.6"/>
+
+  <!-- astronaut (simple silhouette) on the right -->
+  <g transform="translate(905,250)" filter="url(#glowC)">
+    <!-- backpack/torso -->
+    <rect x="-70" y="120" width="150" height="200" rx="55" fill="#e9edf2"/>
+    <rect x="-70" y="120" width="150" height="200" rx="55" fill="none" stroke="#9aa6b3" stroke-width="3"/>
+    <!-- arm reaching up to helmet -->
+    <rect x="40" y="40" width="48" height="150" rx="24" fill="#e9edf2" transform="rotate(28 64 115)"/>
+    <!-- helmet -->
+    <circle cx="0" cy="60" r="92" fill="#f2f5f8"/>
+    <circle cx="0" cy="60" r="70" fill="url(#visor)"/>
+    <ellipse cx="-22" cy="38" rx="22" ry="30" fill="#3b6e96" opacity="0.5"/>
+    <!-- glove near latch -->
+    <circle cx="86" cy="6" r="26" fill="#f2f5f8"/>
+  </g>
+
+  <!-- text -->
+  <g font-family="Arial Black, Arial, sans-serif" font-weight="900" text-anchor="start">
+    <text x="55" y="200" font-size="96" fill="#ffffff" stroke="#000" stroke-width="9" paint-order="stroke">DON'T TAKE</text>
+    <text x="55" y="300" font-size="96" fill="#ffffff" stroke="#000" stroke-width="9" paint-order="stroke">OFF YOUR</text>
+    <text x="55" y="412" font-size="118" fill="#ffd200" stroke="#000" stroke-width="11" paint-order="stroke">HELMET</text>
+    <text x="55" y="492" font-size="56" fill="#ff3b30" stroke="#000" stroke-width="7" paint-order="stroke">IN SPACE 😨</text>
+  </g>
+</svg>

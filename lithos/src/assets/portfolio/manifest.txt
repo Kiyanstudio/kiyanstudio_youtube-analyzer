@@ -1,0 +1,27 @@
+img_00.png | 102KB | ctx: te-x-1/2 z-10 w-[1500px] top-1/2 -translate-y-1/2 sm:top-auto sm:translate-y-0 sm:bottom-0`,children:(0,U.jsx)(cd,{delay:.6,y:30,children:(0,U.jsx)(`img`,{src:`
+img_01.jpg | 110KB | ctx: em)`},children:`a 3d creator driven by crafting striking and unforgettable projects`})}),(0,U.jsx)(cd,{delay:.5,y:20,children:(0,U.jsx)(ud,{})})]})]})}var pd=[`
+img_02.jpg | 49KB | ctx: `,`
+img_03.webp | 38KB | ctx: `,`
+img_04.jpg | 46KB | ctx: `,`
+img_05.webp | 62KB | ctx: `,`
+img_06.webp | 60KB | ctx: `,`
+img_07.jpg | 59KB | ctx: `],md=[`
+img_08.jpg | 55KB | ctx: `,`
+img_09.jpg | 39KB | ctx: `,`
+img_10.jpg | 48KB | ctx: `,`
+img_11.webp | 82KB | ctx: `,`
+img_12.png | 210KB | ctx: e:{fontFamily:`inherit`,cursor:`pointer`,background:`transparent`},children:`Live Project`})}var Ed=[{num:`01`,name:`BMW M1 WEBSITE`,category:`Personal`,col1:[`
+img_13.png | 166KB | ctx: `,`
+img_14.png | 151KB | ctx: `],col2:`
+img_15.png | 16KB | ctx: `},{num:`02`,name:`YouTube Dashboard`,category:`Personal`,col1:[`
+img_16.png | 39KB | ctx: `,`
+img_17.png | 136KB | ctx: `],col2:`
+img_18.png | 55KB | ctx: `},{num:`03`,name:`KIKA RINGS`,category:`Client`,col1:[`
+img_19.png | 57KB | ctx: `,`
+img_20.png | 37KB | ctx: `],col2:`
+img_21.png | 184KB | ctx: `},{num:`04`,name:`BMW M4`,category:`Personal`,col1:[`
+img_22.png | 127KB | ctx: `,`
+img_23.png | 169KB | ctx: `],col2:`
+img_24.png | 86KB | ctx: `},{num:`05`,name:`HEADPHONES SCROLL BASED`,category:`Personal`,col1:[`
+img_25.png | 114KB | ctx: `,`
+img_26.png | 106KB | ctx: `],col2:`

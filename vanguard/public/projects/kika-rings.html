@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KIKA — Close Your Rings</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!--
+  Loader: React, ReactDOM and framer-motion are all ES modules now (framer-motion
+  no longer ships a UMD/window global), so we import them as modules from esm.sh
+  with a single shared React instance, expose them as the globals the JSX code
+  below expects (window.React / window.ReactDOM / window.Motion), THEN load Babel
+  and compile the text/babel scripts. Babel only auto-runs on DOMContentLoaded;
+  loading it late means we trigger the compile ourselves once globals are ready.
+-->
+<script type="module">
+  import React from "https://esm.sh/react@18.3.1";
+  import * as ReactDOMClient from "https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1";
+  import * as Motion from "https://esm.sh/framer-motion@11.11.17?deps=react@18.3.1,react-dom@18.3.1";
+
+  window.React = React;
+  window.ReactDOM = ReactDOMClient;   // exposes createRoot
+  window.Motion = Motion;             // exposes { motion, AnimatePresence, ... }
+  window.FramerMotion = Motion;
+
+  const babel = document.createElement("script");
+  babel.src = "https://unpkg.com/@babel/standalone@7.29.0/babel.min.js";
+  babel.onload = () => window.Babel.transformScriptTags();
+  babel.onerror = () => console.error("Babel CDN failed to load — check your network connection.");
+  document.head.appendChild(babel);
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<script>
+  (function applyTailwindConfig() {
+    var cfg = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ["'Instrument Serif'", "serif"],
+            body: ["'Barlow'", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "9999px",
+          },
+        },
+      },
+    };
+    if (typeof tailwind !== "undefined") {
+      tailwind.config = cfg;
+    } else {
+      var tries = 0;
+      var iv = setInterval(function () {
+        if (typeof tailwind !== "undefined") {
+          tailwind.config = cfg;
+          clearInterval(iv);
+        } else if (++tries > 100) {
+          clearInterval(iv);
+          console.warn("Tailwind CDN failed to load — check your network connection.");
+        }
+      }, 50);
+    }
+  })();
+</script>
+
+<style>
+  body { background: #000; }
+
+  .liquid-glass {
+    background: rgba(255,255,255,0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: none;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(180deg,
+      rgba(255,255,255,0.45) 0%,
+      rgba(255,255,255,0.15) 20%,
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,0) 60%,
+      rgba(255,255,255,0.15) 80%,
+      rgba(255,255,255,0.45) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .liquid-glass-strong {
+    background: rgba(255,255,255,0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+    border: none;
+    box-shadow: 4px 4px 4px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass-strong::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(180deg,
+      rgba(255,255,255,0.5) 0%,
+      rgba(255,255,255,0.2) 20%,
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,0) 60%,
+      rgba(255,255,255,0.2) 80%,
+      rgba(255,255,255,0.5) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Floating ring animation */
+  @keyframes floatRing {
+    0%   { transform: translateY(0px) rotate(0deg); }
+    50%  { transform: translateY(-26px) rotate(180deg); }
+    100% { transform: translateY(0px) rotate(360deg); }
+  }
+  .float-ring { animation: floatRing 14s ease-in-out infinite; }
+
+  @keyframes spinSlow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .spin-slow { animation: spinSlow 60s linear infinite; }
+
+  /* progress dash draw-in for rings */
+  @keyframes drawRing {
+    from { stroke-dashoffset: var(--circ); }
+    to   { stroke-dashoffset: var(--target); }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Icons -->
+<script type="text/babel">
+const ArrowUpRight = ({ className = "h-5 w-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M7 17L17 7" />
+    <path d="M7 7h10v10" />
+  </svg>
+);
+
+const Play = ({ className = "h-4 w-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="6 4 20 12 6 20 6 4" />
+  </svg>
+);
+
+window.ArrowUpRight = ArrowUpRight;
+window.Play = Play;
+</script>
+
+<!-- Ring graphic (the recurring health-ring motif) -->
+<script type="text/babel">
+const ActivityRing = ({ size = 200, stroke = 16, gap = 8,
+  move = 0.82, exercise = 0.64, stand = 0.93, animate = true, idPrefix = "r" }) => {
+  const tracks = [
+    { p: move, color: "#FF375F", glow: "#FF2D55" },
+    { p: exercise, color: "#9DFF00", glow: "#76FF03" },
+    { p: stand, color: "#00E5FF", glow: "#18FFFF" },
+  ];
+  const c = size / 2;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <defs>
+        {tracks.map((t, i) => (
+          <linearGradient key={i} id={`${idPrefix}-grad-${i}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={t.glow} />
+            <stop offset="100%" stopColor={t.color} />
+          </linearGradient>
+        ))}
+      </defs>
+      {tracks.map((t, i) => {
+        const r = c - stroke / 2 - i * (stroke + gap);
+        const circ = 2 * Math.PI * r;
+        const target = circ * (1 - t.p);
+        return (
+          <g key={i} transform={`rotate(-90 ${c} ${c})`}>
+            <circle cx={c} cy={c} r={r} fill="none"
+              stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
+            <circle cx={c} cy={c} r={r} fill="none"
+              stroke={`url(#${idPrefix}-grad-${i})`} strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={circ}
+              style={animate ? {
+                "--circ": circ, "--target": target,
+                strokeDashoffset: target,
+                animation: `drawRing 1.6s cubic-bezier(.22,1,.36,1) ${0.5 + i * 0.2}s both`,
+                filter: `drop-shadow(0 0 6px ${t.glow}88)`,
+              } : { strokeDashoffset: target, filter: `drop-shadow(0 0 6px ${t.glow}88)` }} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+window.ActivityRing = ActivityRing;
+</script>
+
+<!-- BlurText: word-by-word blur-in -->
+<script type="text/babel">
+const { motion } = window.Motion;
+const { useState, useRef, useEffect } = React;
+
+const BlurText = ({ text, className = "" }) => {
+  const words = text.split(" ");
+  const [inView, setInView] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <p ref={ref} className={className}
+      style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", rowGap: "0.1em" }}>
+      {words.map((word, i) => (
+        <motion.span key={i}
+          initial={{ filter: "blur(10px)", opacity: 0, y: 50 }}
+          animate={inView ? {
+            filter: ["blur(10px)", "blur(5px)", "blur(0px)"],
+            opacity: [0, 0.5, 1],
+            y: [50, -5, 0],
+          } : {}}
+          transition={{ duration: 0.7, times: [0, 0.5, 1], ease: "easeOut", delay: (i * 100) / 1000 }}
+          style={{ display: "inline-block", marginRight: "0.28em" }}>
+          {word}
+        </motion.span>
+      ))}
+    </p>
+  );
+};
+window.BlurText = BlurText;
+</script>
+
+<!-- FadingVideo: rAF crossfade, manual loop -->
+<script type="text/babel">
+const FadingVideo = ({ src, className = "", style = {} }) => {
+  const videoRef = React.useRef(null);
+  const rafRef = React.useRef(null);
+  const fadingOutRef = React.useRef(false);
+  const FADE_MS = 500;
+  const FADE_OUT_LEAD = 0.55;
+
+  const fadeTo = (target, duration) => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const start = parseFloat(video.style.opacity) || 0;
+    const delta = target - start;
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min((now - t0) / duration, 1);
+      video.style.opacity = String(start + delta * t);
+      if (t < 1) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+  };
+
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.style.opacity = "0";
+
+    const onLoaded = () => { video.style.opacity = "0"; video.play(); fadeTo(1, FADE_MS); };
+    const onTime = () => {
+      if (!fadingOutRef.current && video.duration) {
+        const remaining = video.duration - video.currentTime;
+        if (remaining <= FADE_OUT_LEAD && remaining > 0) {
+          fadingOutRef.current = true;
+          fadeTo(0, FADE_MS);
+        }
+      }
+    };
+    const onEnded = () => {
+      video.style.opacity = "0";
+      setTimeout(() => {
+        video.currentTime = 0;
+        video.play();
+        fadingOutRef.current = false;
+        fadeTo(1, FADE_MS);
+      }, 100);
+    };
+
+    video.addEventListener("loadeddata", onLoaded);
+    video.addEventListener("timeupdate", onTime);
+    video.addEventListener("ended", onEnded);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      video.removeEventListener("loadeddata", onLoaded);
+      video.removeEventListener("timeupdate", onTime);
+      video.removeEventListener("ended", onEnded);
+    };
+  }, [src]);
+
+  return (
+    <video ref={videoRef} src={src} autoPlay muted playsInline preload="auto"
+      className={className} style={{ opacity: 0, ...style }} />
+  );
+};
+window.FadingVideo = FadingVideo;
+</script>
+
+<!-- Navbar -->
+<script type="text/babel">
+const Navbar = () => {
+  const links = ["Home", "Activity", "Goals", "Insights", "Get KIKA"];
+  return (
+    <nav className="fixed top-4 left-0 right-0 z-50 px-8 lg:px-16">
+      <div className="flex items-center justify-between">
+        <div className="liquid-glass w-12 h-12 rounded-full flex items-center justify-center">
+          <span className="font-heading italic text-white text-2xl lowercase leading-none">k</span>
+        </div>
+
+        <div className="hidden lg:flex items-center liquid-glass rounded-full px-1.5 py-1.5">
+          {links.slice(0, 4).map((l) => (
+            <a key={l} href="#" className="px-3 py-2 text-sm font-medium text-white/90 font-body">{l}</a>
+          ))}
+          <button className="ml-1 flex items-center gap-1 bg-white text-black rounded-full px-3 py-2 text-sm font-medium whitespace-nowrap">
+            Get KIKA <window.ArrowUpRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="w-12 h-12" aria-hidden="true"></div>
+      </div>
+    </nav>
+  );
+};
+window.Navbar = Navbar;
+</script>
+
+<!-- Hero -->
+<script type="text/babel">
+const { motion: M } = window.Motion;
+
+const Hero = () => {
+  const fade = { filter: "blur(10px)", opacity: 0, y: 20 };
+  const show = { filter: "blur(0px)", opacity: 1, y: 0 };
+
+  return (
+    <section className="relative w-screen h-screen overflow-hidden bg-black">
+      <window.FadingVideo
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_080021_d598092b-c4c2-4e53-8e46-94cf9064cd50.mp4"
+        className="absolute left-1/2 top-0 -translate-x-1/2 object-cover object-top z-0"
+        style={{ width: "120%", height: "120%" }} />
+
+      <div className="absolute z-10 top-[14%] right-[8%] hidden md:block pointer-events-none">
+        <div className="float-ring">
+          <window.ActivityRing size={210} stroke={15} gap={7}
+            move={0.88} exercise={0.7} stand={0.97} idPrefix="float" />
+        </div>
+      </div>
+
+      <div className="relative z-10 flex flex-col h-full">
+        <window.Navbar />
+
+        <div className="flex-1 flex flex-col items-center justify-center text-center pt-24 px-4">
+          <M.div initial={fade} animate={show} transition={{ duration: 0.7, ease: "easeOut", delay: 0.4 }}>
+            <div className="liquid-glass rounded-full inline-flex items-center gap-2 pr-3">
+              <span className="bg-white text-black rounded-full px-3 py-1 text-xs font-semibold">New</span>
+              <span className="text-sm text-white/90 font-body">Sleep &amp; Recovery tracking now live</span>
+            </div>
+          </M.div>
+
+          <div className="mt-6">
+            <window.BlurText text="Close Your Rings Every Single Day"
+              className="text-6xl md:text-7xl lg:text-[5.5rem] font-heading italic text-white leading-[0.8] max-w-2xl tracking-[-4px]" />
+          </div>
+
+          <M.p initial={fade} animate={show} transition={{ duration: 0.7, ease: "easeOut", delay: 0.8 }}
+            className="mt-4 text-sm md:text-base text-white max-w-2xl font-body font-light leading-tight">
+            Move, Exercise, and Stand — three simple goals that add up to a healthier you.
+            KIKA turns your daily activity into a beautiful story of progress you can actually feel.
+          </M.p>
+
+          <M.div initial={fade} animate={show} transition={{ duration: 0.7, ease: "easeOut", delay: 1.1 }}
+            className="flex items-center gap-6 mt-6">
+            <button className="liquid-glass-strong rounded-full px-5 py-2.5 text-sm font-medium text-white flex items-center gap-2">
+              Start Moving <window.ArrowUpRight className="h-5 w-5" />
+            </button>
+            <button className="flex items-center gap-2 text-sm font-medium text-white">
+              Watch How <window.Play className="h-4 w-4" />
+            </button>
+          </M.div>
+
+          <M.div initial={fade} animate={show} transition={{ duration: 0.7, ease: "easeOut", delay: 1.3 }}
+            className="flex items-stretch gap-4 mt-8">
+            <div className="liquid-glass p-5 w-[220px] rounded-[1.25rem] flex flex-col items-start">
+              <window.ActivityRing size={28} stroke={4} gap={2}
+                move={0.9} exercise={0.75} stand={1} animate={false} idPrefix="stat1" />
+              <span className="text-4xl tracking-[-1px] leading-none font-heading italic text-white mt-3">540 Cal</span>
+              <span className="text-xs text-white font-body font-light mt-2">Average Daily Move</span>
+            </div>
+            <div className="liquid-glass p-5 w-[220px] rounded-[1.25rem] flex flex-col items-start">
+              <window.ActivityRing size={28} stroke={4} gap={2}
+                move={0.6} exercise={0.95} stand={0.8} animate={false} idPrefix="stat2" />
+              <span className="text-4xl tracking-[-1px] leading-none font-heading italic text-white mt-3">12M+</span>
+              <span className="text-xs text-white font-body font-light mt-2">Rings Closed Worldwide</span>
+            </div>
+          </M.div>
+        </div>
+
+        <M.div initial={fade} animate={show} transition={{ duration: 0.7, ease: "easeOut", delay: 1.4 }}
+          className="flex flex-col items-center gap-4 pb-8">
+          <div className="liquid-glass rounded-full px-3.5 py-1 text-xs font-medium text-white">
+            Trusted by athletes, coaches, and movers everywhere
+          </div>
+          <div className="flex items-center gap-12 md:gap-16 font-heading italic text-white text-2xl md:text-3xl tracking-tight">
+            <span>Pulse</span><span>Stride</span><span>Vita</span><span>Lumen</span><span>Zest</span>
+          </div>
+        </M.div>
+      </div>
+    </section>
+  );
+};
+window.Hero = Hero;
+</script>
+
+<!-- Capabilities -->
+<script type="text/babel">
+const Capabilities = () => {
+  const cards = [
+    {
+      icon: "M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21H5Zm1-4h12l-3.75-5-3 4L9 13l-3 4Z",
+      tags: ["Live Heart Rate", "Zone Coaching", "Recovery Score", "All-Day Sync"],
+      title: "Move Ring",
+      body: "Every step, every heartbeat, counted. KIKA tracks active calories in real time and nudges you toward your daily Move goal.",
+      ring: { move: 0.85, exercise: 0.4, stand: 0.5 },
+    },
+    {
+      icon: "M4 6.47 5.76 10H20v8H4V6.47M22 4h-4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.89-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4Z",
+      tags: ["Workout Detect", "300+ Activities", "Auto Pause", "GPS Routes"],
+      title: "Exercise Ring",
+      body: "Thirty minutes of movement, however you like it. From a brisk walk to an intense session, KIKA knows when you're working.",
+      ring: { move: 0.4, exercise: 0.92, stand: 0.5 },
+    },
+    {
+      icon: "M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1Zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7Z",
+      tags: ["Hourly Reminders", "Posture Nudge", "Streak Tracking", "Gentle Buzz"],
+      title: "Stand Ring",
+      body: "Sitting is the new smoking. KIKA gives you a gentle reminder to stand and stretch at least once every hour, all twelve hours.",
+      ring: { move: 0.5, exercise: 0.4, stand: 0.95 },
+    },
+  ];
+
+  return (
+    <section className="relative w-screen min-h-screen overflow-hidden bg-black">
+      <window.FadingVideo
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_094631_d30ab262-45ee-4b7d-99f3-5d5848c8ef13.mp4"
+        className="absolute inset-0 w-full h-full object-cover z-0" />
+
+      <div className="absolute z-0 -left-40 bottom-[-20%] opacity-30 pointer-events-none spin-slow hidden md:block">
+        <window.ActivityRing size={560} stroke={22} gap={14}
+          move={0.7} exercise={0.55} stand={0.85} animate={false} idPrefix="bg" />
+      </div>
+
+      <div className="relative z-10 px-8 md:px-16 lg:px-20 pt-24 pb-10 flex flex-col min-h-screen">
+        <div className="mb-auto">
+          <p className="text-sm font-body text-white/80 mb-6">// Three Rings</p>
+          <h2 className="font-heading italic text-white text-6xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-[-3px]">
+            Health<br/>in motion
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+          {cards.map((card, i) => (
+            <div key={i} className="liquid-glass rounded-[1.25rem] p-6 min-h-[360px] flex flex-col">
+              <div className="flex items-start justify-between gap-4">
+                <div className="liquid-glass w-11 h-11 rounded-[0.75rem] flex items-center justify-center">
+                  <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d={card.icon} />
+                  </svg>
+                </div>
+                <div className="flex flex-wrap justify-end gap-1.5 max-w-[70%]">
+                  {card.tags.map((t) => (
+                    <span key={t} className="liquid-glass rounded-full px-3 py-1 text-[11px] text-white/90 font-body whitespace-nowrap">{t}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex-1 flex items-center justify-center py-4">
+                <window.ActivityRing size={120} stroke={11} gap={5}
+                  move={card.ring.move} exercise={card.ring.exercise} stand={card.ring.stand}
+                  idPrefix={`card${i}`} />
+              </div>
+
+              <div className="mt-6">
+                <h3 className="font-heading italic text-white text-3xl md:text-4xl tracking-[-1px] leading-none">{card.title}</h3>
+                <p className="mt-3 text-sm text-white/90 font-body font-light leading-snug max-w-[32ch]">{card.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+window.Capabilities = Capabilities;
+</script>
+
+<!-- App root -->
+<script type="text/babel">
+const _err = console.error;
+console.error = (...args) => {
+  if (typeof args[0] === "string" && args[0].includes("unique \"key\"")) return;
+  _err(...args);
+};
+
+const App = () => (
+  <div>
+    <window.Hero />
+    <window.Capabilities />
+  </div>
+);
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

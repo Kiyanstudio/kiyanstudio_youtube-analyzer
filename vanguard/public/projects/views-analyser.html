@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YouTube Views Globe — 3D</title>
+<style>
+  :root {
+    --bg: #04060f; --panel: rgba(10, 16, 34, 0.82); --accent: #00e5ff;
+    --accent2: #ff2bd6; --text: #e8f0ff; --muted: #8aa0c5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; }
+  a { color: var(--accent); }
+  code { background: rgba(0,229,255,0.1); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+
+  .screen { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(1200px 600px at 50% -10%, rgba(0,229,255,0.12), transparent 60%),
+      radial-gradient(900px 500px at 80% 110%, rgba(255,43,214,0.10), transparent 60%), var(--bg); }
+  .card { width: min(560px, 92vw); background: var(--panel); border: 1px solid rgba(120,160,255,0.18);
+    border-radius: 18px; padding: 34px; backdrop-filter: blur(14px);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 6px; }
+  h1 span { background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p.sub { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-bottom: 22px; }
+  label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); margin: 16px 0 7px; }
+  input[type=text] { width: 100%; padding: 13px 14px; font-size: 14px; color: var(--text);
+    background: rgba(4,8,20,0.7); border: 1px solid rgba(120,160,255,0.22); border-radius: 10px;
+    outline: none; transition: border .2s, box-shadow .2s; }
+  input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,255,0.15); }
+  .hint { font-size: 11.5px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+  .btn { width: 100%; margin-top: 22px; padding: 14px; font-size: 15px; font-weight: 600; color: #04060f;
+    cursor: pointer; border: none; border-radius: 11px; background: linear-gradient(90deg, var(--accent), #6df);
+    transition: transform .12s, filter .2s; letter-spacing: .3px; }
+  .btn:hover { filter: brightness(1.08); } .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .55; cursor: progress; }
+  .err { color: #ff8080; font-size: 13px; margin-top: 14px; min-height: 16px; }
+  .note { margin-top: 18px; font-size: 11.5px; color: var(--muted); line-height: 1.5;
+    border-top: 1px solid rgba(120,160,255,0.12); padding-top: 14px; }
+  .note b { color: #cfe0ff; }
+  .origin { font-size: 11.5px; color: var(--muted); margin-top: 14px; }
+  .origin code { user-select: all; }
+
+  /* ---------- Picker ---------- */
+  #picker { flex-direction: column; align-items: stretch; padding: 0; }
+  .picker-head { padding: 20px 28px 14px; display: flex; align-items: center; gap: 16px;
+    border-bottom: 1px solid rgba(120,160,255,0.12); background: rgba(6,10,24,0.6); backdrop-filter: blur(8px); }
+  .picker-head h2 { font-size: 18px; font-weight: 700; }
+  .picker-head .count { color: var(--muted); font-size: 13px; }
+  .picker-head .spacer { flex: 1; }
+  .toggle { display: flex; gap: 4px; background: rgba(4,8,20,0.7); padding: 4px; border-radius: 10px;
+    border: 1px solid rgba(120,160,255,0.18); }
+  .toggle button { background: none; border: none; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 7px 14px; border-radius: 7px; cursor: pointer; }
+  .toggle button.active { background: var(--accent); color: #04060f; }
+  .grid { flex: 1; overflow-y: auto; padding: 22px 28px 40px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 18px; align-content: start; }
+  .vcard { background: var(--panel); border: 1px solid rgba(120,160,255,0.18); border-radius: 14px;
+    overflow: hidden; cursor: pointer; transition: transform .15s, border-color .2s, box-shadow .2s; }
+  .vcard:hover { transform: translateY(-4px); border-color: var(--accent);
+    box-shadow: 0 14px 40px rgba(0,229,255,0.2); }
+  .vthumb { position: relative; width: 100%; aspect-ratio: 9/16; background: #0a1430; overflow: hidden; }
+  .vthumb img { width: 100%; height: 100%; object-fit: cover; }
+  .vdur { position: absolute; bottom: 7px; right: 7px; background: rgba(0,0,0,0.8); color: #fff;
+    font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 5px; }
+  .vbadge { position: absolute; top: 7px; left: 7px; background: var(--accent2); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; letter-spacing: .5px; }
+  .vmeta { padding: 11px 12px 13px; }
+  .vtit { font-size: 12.5px; font-weight: 600; line-height: 1.35; height: 34px; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .vviews { font-size: 11.5px; color: var(--accent); margin-top: 6px; font-weight: 600; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; top: 16px; left: 16px; z-index: 20; display: none; background: var(--panel);
+    border: 1px solid rgba(120,160,255,0.18); border-radius: 14px; padding: 14px 16px; width: min(300px, 80vw);
+    backdrop-filter: blur(12px); box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+  #hud .vtitle { font-size: 13.5px; font-weight: 600; line-height: 1.35; margin-bottom: 8px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  #hud .total { font-size: 24px; font-weight: 800; background: linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #hud .totallbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  #hud .tip { font-size: 11.5px; color: var(--muted); margin-top: 10px; line-height: 1.45; }
+  #hud .reset { margin-top: 10px; font-size: 12px; color: var(--accent); cursor: pointer;
+    background: none; border: 1px solid rgba(0,229,255,0.4); padding: 6px 10px; border-radius: 8px; }
+
+  #tooltip { position: fixed; z-index: 30; pointer-events: none; display: none; transform: translate(-50%, -120%);
+    background: rgba(6,12,28,0.95); border: 1px solid var(--accent); border-radius: 10px; padding: 9px 13px;
+    min-width: 120px; text-align: center; box-shadow: 0 8px 30px rgba(0,229,255,0.25); }
+  #tooltip .c { font-size: 13px; font-weight: 600; } #tooltip .l { font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px; }
+  #tooltip .v { font-size: 19px; font-weight: 800; color: var(--accent); margin-top: 2px; }
+
+  #loading { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center;
+    flex-direction: column; gap: 18px; background: rgba(4,6,15,0.9); }
+  .spinner { width: 46px; height: 46px; border: 3px solid rgba(0,229,255,0.2); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { color: var(--muted); font-size: 13px; }
+
+  #legend { position: fixed; bottom: 16px; right: 16px; z-index: 20; display: none; background: var(--panel);
+    border: 1px solid rgba(120,160,255,0.18); border-radius: 12px; padding: 12px 14px; font-size: 11.5px;
+    color: var(--muted); backdrop-filter: blur(12px); }
+  #legend .row { display: flex; align-items: center; gap: 9px; margin: 5px 0; }
+  #legend .dot { background: radial-gradient(circle, #fff, var(--accent) 60%, transparent 75%);
+    border-radius: 50%; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- 1) Connect screen -->
+<div id="auth" class="screen">
+  <div class="card">
+    <h1>3D <span>YouTube Views Globe</span></h1>
+    <p class="sub">Connect your YouTube account, pick one of your Shorts, and watch your real per-country views light up a 3D globe. Drag to spin, click a glowing dot for the exact count.</p>
+
+    <label for="clientId">OAuth Client ID</label>
+    <input type="text" id="clientId" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off" spellcheck="false" />
+    <div class="hint">This is the <b>Client ID</b> from the “User data” / OAuth credential you created in Google Cloud — it ends in <code>.apps.googleusercontent.com</code>. (Not an API key.)</div>
+
+    <button class="btn" id="connectBtn">🔗 Connect YouTube</button>
+    <div class="err" id="authErr"></div>
+
+    <div class="origin">In Google Cloud → your OAuth client → <b>Authorized JavaScript origins</b>, add:<br>
+      <code id="originBox">—</code></div>
+
+    <div class="note">
+      <b>Scopes used:</b> <code>yt-analytics.readonly</code> + <code>youtube.readonly</code> (read-only).
+      Per-country views come from the <b>YouTube Analytics API</b>, which only works for channels you own and requires this OAuth login. Add your Google account as a <b>Test user</b> on the consent screen if the app isn’t verified.
+    </div>
+  </div>
+</div>
+
+<!-- 2) Short picker -->
+<div id="picker" class="screen" style="display:none">
+  <div class="picker-head">
+    <div><h2>Pick a Short</h2><div class="count" id="pickCount">—</div></div>
+    <div class="spacer"></div>
+    <div class="toggle">
+      <button id="tgShorts" class="active">Shorts</button>
+      <button id="tgAll">All videos</button>
+    </div>
+    <button class="reset" id="wholeChannelBtn" style="margin:0">🌍 Whole channel</button>
+    <button class="reset" id="signOut" style="margin:0">↩ Disconnect</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="vtitle" id="hudTitle">—</div>
+  <div class="totallbl">Total views</div>
+  <div class="total" id="hudTotal">0</div>
+  <div class="tip">🖱️ Drag to spin · scroll to zoom · click a dot for exact views</div>
+  <button class="reset" id="backBtn">🎬 Pick a single Short</button>
+</div>
+
+<div id="tooltip">
+  <div class="l">Views from</div>
+  <div class="c" id="ttCountry">—</div>
+  <div class="v" id="ttViews">0</div>
+</div>
+
+<div id="legend">
+  <div style="color:#cfe0ff;font-weight:600;margin-bottom:6px;">Dot size = views</div>
+  <div class="row"><span class="dot" style="width:8px;height:8px;"></span> Fewer views</div>
+  <div class="row"><span class="dot" style="width:16px;height:16px;"></span> More views</div>
+</div>
+
+<div id="loading"><div class="spinner"></div><p id="loadingTxt">Loading…</p></div>
+
+<!-- Libs -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
+<script src="https://unpkg.com/d3-geo@3/dist/d3-geo.min.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const GLOBE_RADIUS = 2;
+const WORLD_TOPO_URL = 'https://unpkg.com/world-atlas@2/countries-110m.json';
+const SCOPES = 'https://www.googleapis.com/auth/yt-analytics.readonly https://www.googleapis.com/auth/youtube.readonly';
+
+// ISO 3166-1 alpha-2 -> [name, lat, lng] (approx. centroids). Analytics returns these codes.
+const COUNTRY = {
+  US:['United States',38,-97], IN:['India',22,79], GB:['United Kingdom',54,-2], BR:['Brazil',-10,-52],
+  ID:['Indonesia',-2.5,118], DE:['Germany',51,10.4], CA:['Canada',56,-106], JP:['Japan',36,138],
+  MX:['Mexico',23.6,-102.5], PH:['Philippines',12.9,121.8], AU:['Australia',-25,133], FR:['France',46.2,2.2],
+  NG:['Nigeria',9.1,8.7], PK:['Pakistan',30.4,69.3], KR:['South Korea',36.5,127.8], ES:['Spain',40,-4],
+  IT:['Italy',42.8,12.6], RU:['Russia',61.5,105], TR:['Turkey',39,35], EG:['Egypt',26.8,30.8],
+  BD:['Bangladesh',23.7,90.4], VN:['Vietnam',14,108], TH:['Thailand',15,101], NL:['Netherlands',52.1,5.3],
+  SA:['Saudi Arabia',24,45], AR:['Argentina',-38,-63], PL:['Poland',52,19], CO:['Colombia',4,-72],
+  ZA:['South Africa',-29,24], UA:['Ukraine',49,32], MY:['Malaysia',4.2,102], PE:['Peru',-10,-76],
+  IR:['Iran',32,53], DZ:['Algeria',28,3], MA:['Morocco',32,-6], IQ:['Iraq',33,44],
+  CL:['Chile',-30,-71], AE:['United Arab Emirates',24,54], SE:['Sweden',62,15], BE:['Belgium',50.6,4.6],
+  RO:['Romania',46,25], CZ:['Czechia',49.8,15.5], PT:['Portugal',39.5,-8], GR:['Greece',39,22],
+  HU:['Hungary',47,20], AT:['Austria',47.5,14.5], CH:['Switzerland',47,8.2], IL:['Israel',31,35],
+  HK:['Hong Kong',22.3,114.2], SG:['Singapore',1.35,103.8], TW:['Taiwan',23.7,121], NZ:['New Zealand',-41,174],
+  IE:['Ireland',53,-8], DK:['Denmark',56,10], FI:['Finland',64,26], NO:['Norway',62,10],
+  VE:['Venezuela',8,-66], EC:['Ecuador',-1.4,-78], GT:['Guatemala',15.7,-90], CU:['Cuba',22,-79.5],
+  DO:['Dominican Republic',19,-70.7], BO:['Bolivia',-17,-65], HN:['Honduras',15,-86.5], PY:['Paraguay',-23,-58],
+  SV:['El Salvador',13.8,-88.9], CR:['Costa Rica',10,-84], PA:['Panama',9,-80], UY:['Uruguay',-33,-56],
+  KE:['Kenya',1,38], GH:['Ghana',8,-1], TZ:['Tanzania',-6,35], UG:['Uganda',1,32],
+  ET:['Ethiopia',8,38], SD:['Sudan',15,30], AO:['Angola',-12,18], CM:['Cameroon',6,12],
+  CI:["Côte d'Ivoire",8,-5], SN:['Senegal',14,-14], ZM:['Zambia',-13,28], ZW:['Zimbabwe',-19,29],
+  TN:['Tunisia',34,9], LY:['Libya',27,17], JO:['Jordan',31,36], LB:['Lebanon',34,36],
+  KW:['Kuwait',29.5,47.7], QA:['Qatar',25.3,51.2], OM:['Oman',21,57], YE:['Yemen',15.5,48],
+  SY:['Syria',35,38], AF:['Afghanistan',33,66], NP:['Nepal',28,84], LK:['Sri Lanka',7.8,80.7],
+  MM:['Myanmar',22,96], KH:['Cambodia',13,105], LA:['Laos',18,105], KZ:['Kazakhstan',48,68],
+  UZ:['Uzbekistan',41,64], AZ:['Azerbaijan',40,47.5], GE:['Georgia',42,43.5], AM:['Armenia',40,45],
+  BY:['Belarus',53,28], BG:['Bulgaria',42.7,25.5], RS:['Serbia',44,21], HR:['Croatia',45.1,15.5],
+  SK:['Slovakia',48.7,19.5], SI:['Slovenia',46,15], LT:['Lithuania',55,24], LV:['Latvia',57,25],
+  EE:['Estonia',59,26], IS:['Iceland',65,-18], LU:['Luxembourg',49.8,6.1], MT:['Malta',35.9,14.4],
+  CY:['Cyprus',35,33], AL:['Albania',41,20], MK:['North Macedonia',41.6,21.7], BA:['Bosnia & Herz.',44,18],
+  ME:['Montenegro',42.7,19.3], MD:['Moldova',47,28.5], NIC:['Nicaragua',13,-85], NI:['Nicaragua',13,-85],
+  PR:['Puerto Rico',18.2,-66.5], JM:['Jamaica',18.1,-77.3], TT:['Trinidad & Tobago',10.5,-61.3],
+  BH:['Bahrain',26,50.5], MN:['Mongolia',46,105], BN:['Brunei',4.5,114.7], MV:['Maldives',3.2,73],
+  MU:['Mauritius',-20.3,57.6], MG:['Madagascar',-19,46], MZ:['Mozambique',-18,35], BW:['Botswana',-22,24],
+  NA:['Namibia',-22,17], RW:['Rwanda',-2,30], MW:['Malawi',-13.5,34], ML:['Mali',17,-4],
+  BF:['Burkina Faso',12,-1.5], NE:['Niger',17,8], TD:['Chad',15,19], SO:['Somalia',6,46],
+  CD:['DR Congo',-2,23], CG:['Congo',-1,15], GA:['Gabon',-0.6,11.6], BJ:['Benin',9.3,2.3],
+  TG:['Togo',8,1.2], GN:['Guinea',11,-10], FJ:['Fiji',-17.7,178], PG:['Papua New Guinea',-6,147],
+  BT:['Bhutan',27.5,90.4], PS:['Palestine',31.9,35.2], XK:['Kosovo',42.6,21], GY:['Guyana',5,-59],
+  SR:['Suriname',4,-56], BZ:['Belize',17.2,-88.7], BS:['Bahamas',25,-77], BB:['Barbados',13.2,-59.5]
+};
+
+const $ = id => document.getElementById(id);
+const authEl=$('auth'), pickerEl=$('picker'), hudEl=$('hud'), legendEl=$('legend'),
+      loadingEl=$('loading'), loadingTxt=$('loadingTxt'), tooltipEl=$('tooltip'), authErr=$('authErr');
+
+let accessToken = null, tokenClient = null, channelStart = '2005-01-01';
+let allVideos = [], showMode = 'shorts', uploadsPlaylistId = '';
+
+$('originBox').textContent = location.origin;
+function showLoading(msg){ loadingTxt.textContent = msg; loadingEl.style.display='flex'; }
+function hideLoading(){ loadingEl.style.display='none'; }
+
+// ---------- OAuth (Google Identity Services) ----------
+$('connectBtn').addEventListener('click', () => {
+  authErr.textContent = '';
+  const clientId = $('clientId').value.trim();
+  if (!clientId) { authErr.textContent = 'Please paste your OAuth Client ID.'; return; }
+  if (!window.google || !google.accounts || !google.accounts.oauth2) {
+    authErr.textContent = 'Google sign-in library not loaded yet — wait a moment and retry.'; return;
+  }
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId, scope: SCOPES,
+      callback: async (resp) => {
+        if (resp.error) { authErr.textContent = 'Authorization failed: ' + resp.error; return; }
+        accessToken = resp.access_token;
+        try { await afterAuth(); }
+        catch (e) { hideLoading(); authErr.textContent = '⚠ ' + e.message; }
+      }
+    });
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  } catch (e) { authErr.textContent = '⚠ ' + e.message; }
+});
+
+$('signOut').addEventListener('click', () => {
+  accessToken = null; allVideos = [];
+  pickerEl.style.display = 'none'; authEl.style.display = 'flex';
+});
+$('wholeChannelBtn').addEventListener('click', () => { pickerEl.style.display = 'none'; showChannelGlobe(); });
+
+async function api(url) {
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message || (j.error.errors && j.error.errors[0].message) || 'API request failed');
+  return j;
+}
+
+function isoDurToSec(s) {
+  const m = (s||'').match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/) || [];
+  return (+(m[1]||0))*3600 + (+(m[2]||0))*60 + (+(m[3]||0));
+}
+function fmtDur(sec){ const m=Math.floor(sec/60), s=sec%60; return m+':'+String(s).padStart(2,'0'); }
+
+// ---------- Load the user's uploads ----------
+let channelInfo = { title: '', videoCount: '?' };
+async function afterAuth() {
+  showLoading('Reading your channel…');
+  const ch = await api('https://www.googleapis.com/youtube/v3/channels?part=contentDetails,snippet,statistics&mine=true');
+  if (!ch.items || !ch.items.length) throw new Error('No YouTube channel found on this account. The connected Google account may not own a channel — try a different account.');
+  const me = ch.items[0];
+  const uploads = me.contentDetails.relatedPlaylists.uploads;
+  channelStart = (me.snippet.publishedAt || '2005-01-01').slice(0, 10);
+  channelInfo = { title: me.snippet.title || '(unnamed)', videoCount: (me.statistics && me.statistics.videoCount) || '0' };
+  uploadsPlaylistId = uploads;
+  await showChannelGlobe();   // go straight to the whole-channel globe
+}
+
+// Whole-channel per-country views (no single-video filter)
+async function showChannelGlobe() {
+  showLoading('Mapping your whole channel’s views…');
+  try {
+    const dist = await fetchCountryViews();   // no videoId => entire channel
+    await renderGlobe(dist, channelInfo.title + ' — whole channel',
+      'no per-country data yet (the channel may have too few views, or analytics can take ~48h).');
+  } catch (e) { hideLoading(); authErr.textContent = '⚠ ' + e.message; authEl.style.display = 'flex'; }
+}
+
+// Lazily load the channel's videos, then open the optional Short picker
+async function loadVideosThenPicker() {
+  try {
+    if (!allVideos.length) {
+      showLoading('Fetching your videos…');
+      let ids = [], pageToken = '', pages = 0;
+      do {
+        const pl = await api('https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50'
+          + '&playlistId=' + uploadsPlaylistId + (pageToken ? '&pageToken=' + pageToken : ''));
+        ids.push(...pl.items.map(i => i.contentDetails.videoId));
+        pageToken = pl.nextPageToken; pages++;
+      } while (pageToken && pages < 4);   // up to ~200 most recent uploads
+      allVideos = [];
+      for (let i = 0; i < ids.length; i += 50) {
+        const chunk = ids.slice(i, i + 50);
+        const v = await api('https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=' + chunk.join(','));
+        for (const it of v.items) {
+          const sec = isoDurToSec(it.contentDetails.duration);
+          allVideos.push({ id: it.id, title: it.snippet.title,
+            thumb: (it.snippet.thumbnails.medium || it.snippet.thumbnails.default || {}).url || '',
+            views: parseInt(it.statistics.viewCount || '0', 10),
+            sec, isShort: sec > 0 && sec <= 183 });   // Shorts can now be up to 3 min
+        }
+      }
+      hideLoading();
+    }
+    hudEl.style.display = 'none'; legendEl.style.display = 'none'; tooltipEl.style.display = 'none';
+    pickerEl.style.display = 'flex';
+    renderPicker();
+  } catch (e) { hideLoading(); alert('Could not load your videos: ' + e.message); }
+}
+
+function renderPicker() {
+  const list = showMode === 'shorts' ? allVideos.filter(v => v.isShort) : allVideos;
+  $('pickCount').textContent = 'Connected to “' + channelInfo.title + '” (channel reports '
+    + channelInfo.videoCount + ' videos) · ' + list.length + (showMode === 'shorts' ? ' Shorts' : ' videos') + ' · click one';
+  const grid = $('grid'); grid.innerHTML = '';
+  if (!list.length) {
+    if (showMode === 'all') {
+      grid.innerHTML = '<div style="color:var(--muted);grid-column:1/-1;line-height:1.6">'
+        + '<b style="color:#cfe0ff">No videos came back from this channel.</b><br>'
+        + 'Connected channel: <b>“' + channelInfo.title + '”</b>, which reports <b>' + channelInfo.videoCount + '</b> videos.<br><br>'
+        + (channelInfo.videoCount === '0'
+            ? '→ This channel genuinely has 0 videos. You likely logged in with the wrong account/channel (e.g. a personal channel instead of your Brand channel). Click <b>Disconnect</b> and reconnect, picking the channel that has your Shorts.'
+            : '→ The channel reports videos but none loaded — they may be older than my most-recent-200 fetch, or set to private. Tell me this number and I’ll widen the search.')
+        + '</div>';
+    } else {
+      grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1">No Shorts (≤3 min) detected in your recent uploads — click <b>“All videos”</b> above to see everything.</p>';
+    }
+    return;
+  }
+  for (const v of list) {
+    const card = document.createElement('div');
+    card.className = 'vcard';
+    card.innerHTML =
+      `<div class="vthumb">${v.isShort ? '<span class="vbadge">SHORT</span>' : ''}`
+      + `<img loading="lazy" src="${v.thumb}" alt=""><span class="vdur">${fmtDur(v.sec)}</span></div>`
+      + `<div class="vmeta"><div class="vtit">${v.title.replace(/</g,'&lt;')}</div>`
+      + `<div class="vviews">${v.views.toLocaleString()} views</div></div>`;
+    card.addEventListener('click', () => selectVideo(v));
+    grid.appendChild(card);
+  }
+}
+$('tgShorts').addEventListener('click', () => { showMode='shorts';
+  $('tgShorts').classList.add('active'); $('tgAll').classList.remove('active'); renderPicker(); });
+$('tgAll').addEventListener('click', () => { showMode='all';
+  $('tgAll').classList.add('active'); $('tgShorts').classList.remove('active'); renderPicker(); });
+
+// ---------- Analytics: real per-country views ----------
+async function fetchCountryViews(videoId) {
+  const end = new Date().toISOString().slice(0, 10);
+  let url = 'https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE'
+    + '&startDate=' + channelStart + '&endDate=' + end
+    + '&metrics=views&dimensions=country&sort=-views&maxResults=250';
+  if (videoId) url += '&filters=video%3D%3D' + videoId;   // omit => whole channel
+  const j = await api(url);
+  const rows = j.rows || [];
+  return rows.map(([code, views]) => {
+    const c = COUNTRY[code];
+    return c ? { name: c[0], lat: c[1], lng: c[2], views, code } : null;
+  }).filter(Boolean);
+}
+
+async function selectVideo(v) {
+  showLoading('Crunching where this Short’s views come from…');
+  try {
+    const dist = await fetchCountryViews(v.id);
+    await renderGlobe(dist, v.title, 'no per-country data yet (too few views, or data not ready).');
+  } catch (e) { hideLoading(); alert('Could not load analytics: ' + e.message); }
+}
+
+// Shared: build the globe + HUD from a per-country distribution
+async function renderGlobe(dist, title, emptyMsg) {
+  await ensureScene();
+  addViewsDots(dist);
+  const total = dist.reduce((s, d) => s + d.views, 0);
+  $('hudTitle').textContent = dist.length ? title : title + ' — ' + (emptyMsg || 'no data');
+  $('hudTotal').textContent = total.toLocaleString();
+  hideLoading();
+  authEl.style.display = 'none';
+  pickerEl.style.display = 'none';
+  hudEl.style.display = 'block';
+  legendEl.style.display = dist.length ? 'block' : 'none';
+  renderer.domElement.style.cursor = 'grab';
+  autoRotate = true;
+}
+
+$('backBtn').addEventListener('click', loadVideosThenPicker);
+
+/* =======================  3D SCENE  ======================= */
+let scene, camera, renderer, controls, globeGroup, raycaster, pointer;
+let dotMeshes = [], autoRotate = true, sceneReady = false, clock;
+
+async function ensureScene() {
+  if (sceneReady) return;
+  initScene();
+  showLoading('Building the planet…');
+  await loadCountryBorders();
+  sceneReady = true;
+}
+
+function initScene() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
+  camera.position.set(0, 1.5, 6);
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  $('app').appendChild(renderer.domElement);
+
+  scene.add(makeStars());
+  scene.add(new THREE.AmbientLight(0x4060a0, 1.2));
+  const dir = new THREE.DirectionalLight(0xffffff, 1.1); dir.position.set(5, 3, 5); scene.add(dir);
+  const rim = new THREE.PointLight(0x00e5ff, 1.4, 30); rim.position.set(-6, 2, -4); scene.add(rim);
+
+  globeGroup = new THREE.Group(); scene.add(globeGroup);
+
+  globeGroup.add(new THREE.Mesh(
+    new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64),
+    new THREE.MeshPhongMaterial({ color: 0x0a2452, emissive: 0x041028, shininess: 18, specular: 0x224488 })));
+
+  const atmo = new THREE.Mesh(new THREE.SphereGeometry(GLOBE_RADIUS * 1.025, 64, 64),
+    new THREE.ShaderMaterial({ transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending,
+      vertexShader: `varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);}`,
+      fragmentShader: `varying vec3 vN; void main(){ float i = pow(0.62 - dot(vN, vec3(0,0,1.0)), 3.0);
+        gl_FragColor = vec4(0.0,0.9,1.0,1.0) * i; }` }));
+  atmo.scale.setScalar(1.12); globeGroup.add(atmo);
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08; controls.rotateSpeed = 0.55;
+  controls.minDistance = 3; controls.maxDistance = 12; controls.enablePan = false;
+  controls.addEventListener('start', () => { autoRotate = false; });
+
+  raycaster = new THREE.Raycaster(); pointer = new THREE.Vector2(); clock = new THREE.Clock();
+  addEventListener('resize', onResize);
+  renderer.domElement.addEventListener('click', onClick);
+  renderer.domElement.addEventListener('pointermove', onHover);
+  animate();
+}
+
+function makeStars() {
+  const g = new THREE.BufferGeometry(), n = 1800, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const r = 60 + Math.random() * 120, t = Math.random() * Math.PI * 2, p = Math.acos(2 * Math.random() - 1);
+    pos[i*3] = r*Math.sin(p)*Math.cos(t); pos[i*3+1] = r*Math.sin(p)*Math.sin(t); pos[i*3+2] = r*Math.cos(p);
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ color: 0xaaccff, size: 0.5, sizeAttenuation: true }));
+}
+
+function latLngToVec3(lat, lng, radius) {
+  const phi = (90 - lat) * Math.PI / 180, theta = (lng + 180) * Math.PI / 180;
+  return new THREE.Vector3(-radius*Math.sin(phi)*Math.cos(theta), radius*Math.cos(phi), radius*Math.sin(phi)*Math.sin(theta));
+}
+
+async function loadCountryBorders() {
+  const topo = await fetch(WORLD_TOPO_URL).then(r => r.json());
+  const geo = topojson.feature(topo, topo.objects.countries);
+  const positions = [], R = GLOBE_RADIUS * 1.001;
+  const addRing = ring => { for (let i = 0; i < ring.length - 1; i++) {
+    const a = latLngToVec3(ring[i][1], ring[i][0], R), b = latLngToVec3(ring[i+1][1], ring[i+1][0], R);
+    positions.push(a.x, a.y, a.z, b.x, b.y, b.z); } };
+  for (const f of geo.features) { const g = f.geometry; if (!g) continue;
+    if (g.type === 'Polygon') g.coordinates.forEach(addRing);
+    else if (g.type === 'MultiPolygon') g.coordinates.forEach(p => p.forEach(addRing)); }
+  const bg = new THREE.BufferGeometry();
+  bg.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  globeGroup.add(new THREE.LineSegments(bg, new THREE.LineBasicMaterial({ color: 0x49ffe0, transparent: true, opacity: 0.5 })));
+}
+
+const glowTexture = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.2,'rgba(120,255,255,0.95)');
+  g.addColorStop(0.5,'rgba(0,229,255,0.55)'); g.addColorStop(1,'rgba(0,229,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,128,128); return new THREE.CanvasTexture(c);
+})();
+
+function clearDots(){ dotMeshes.forEach(d => globeGroup.remove(d.group)); dotMeshes = []; }
+
+function addViewsDots(distribution) {
+  clearDots();
+  const maxViews = Math.max(...distribution.map(d => d.views), 1);
+  for (const d of distribution) {
+    const t = Math.sqrt(d.views / maxViews);          // sqrt so small values stay visible
+    const size = 0.045 + t * 0.13;
+    const group = new THREE.Group();
+    group.position.copy(latLngToVec3(d.lat, d.lng, GLOBE_RADIUS + 0.02));
+    const core = new THREE.Mesh(new THREE.SphereGeometry(size, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    core.userData = d; group.add(core);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: 0x00e5ff,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    glow.scale.setScalar(size * 6); group.add(glow);
+    globeGroup.add(group);
+    dotMeshes.push({ group, core, glow, baseGlow: size * 6, data: d });
+  }
+}
+
+function setPointer(e){ pointer.x = (e.clientX/innerWidth)*2-1; pointer.y = -(e.clientY/innerHeight)*2+1; }
+function onClick(e) {
+  setPointer(e); raycaster.setFromCamera(pointer, camera);
+  const hit = raycaster.intersectObjects(dotMeshes.map(d => d.core))[0];
+  if (hit) { const d = hit.object.userData;
+    $('ttCountry').textContent = d.name; $('ttViews').textContent = d.views.toLocaleString();
+    tooltipEl.style.left = e.clientX + 'px'; tooltipEl.style.top = e.clientY + 'px'; tooltipEl.style.display = 'block';
+  } else tooltipEl.style.display = 'none';
+}
+let hovering = false;
+function onHover(e) {
+  setPointer(e); raycaster.setFromCamera(pointer, camera);
+  const now = !!raycaster.intersectObjects(dotMeshes.map(d => d.core))[0];
+  if (now !== hovering) { hovering = now; renderer.domElement.style.cursor = now ? 'pointer' : 'grab'; }
+}
+function onResize(){ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); }
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  if (autoRotate) globeGroup.rotation.y += 0.0016;
+  dotMeshes.forEach((d, i) => d.glow.scale.setScalar(d.baseGlow * (1 + 0.18 * Math.sin(t * 2.2 + i))));
+  controls.update(); renderer.render(scene, camera);
+}
+
+// expose a couple of internals for testing/diagnostics
+window.__globe = { addViewsDots, ensureScene, selectVideo, get dots(){ return dotMeshes.length; }, COUNTRY };
+</script>
+</body>
+</html>
